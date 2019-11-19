@@ -41,12 +41,12 @@ public class Main {
                     System.out.println("=========================\n");
                     tcOption = s.nextInt();
                     if (tcOption == 1) {
-                        tc = MM1Queue.normal();
+                        tc = MM2Queue.normal();
                     } else {
                         if (tcOption == 2) {
-                            tc = MM1Queue.poisson(lambda);
+                            tc = MM2Queue.poisson(lambda);
                         } else {
-                            tc = MM1Queue.exponencial(lambda);
+                            tc = MM2Queue.exponencial(lambda);
                         }
                     }
                     break;
@@ -80,12 +80,12 @@ public class Main {
                     System.out.println("=========================\n");
                     int opcaoDist = s.nextInt();
                     if (opcaoDist == 1) {
-                        ts = MM1Queue.normal();
+                        ts = MM2Queue.normal();
                     } else {
                         if (opcaoDist == 2) {
-                            ts = MM1Queue.poisson(lambda);
+                            ts = MM2Queue.poisson(lambda);
                         } else {
-                            ts = MM1Queue.exponencial(lambda);
+                            ts = MM2Queue.exponencial(lambda);
                         }
                     }
                     break;
@@ -95,7 +95,7 @@ public class Main {
             }
         } while (opcaoTs == 0);
 
-        MM1Queue c1 = new MM1Queue(lambda, ts, length, tc, tcOption);
+        MM2Queue c1 = new MM2Queue(lambda, ts, length, tc, tcOption);
 
         c1.simular();
 

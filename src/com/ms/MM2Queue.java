@@ -2,12 +2,11 @@ package com.ms;
 
 import java.util.*;
 
-public class MM1Queue {
+public class MM2Queue {
 
 
-    LinkedList<Event> events;
+    Map<Integer, LinkedList<Event>> mapServerEvents;
     int tcOption;
-    int tsOption;
     double relogioDeSimulacao;
     double TR; //Tempo da simulação
     int TF;    //Tamanho da fila
@@ -24,7 +23,7 @@ public class MM1Queue {
     int requests, served;
 
 
-    public MM1Queue(double lambda, double ts, double TR, double tc, int tcOption) {
+    public MM2Queue(double lambda, double ts, double TR, double tc, int tcOption) {
         this.lambda = lambda;
         this.ts = ts;
         this.TR = TR;
@@ -40,7 +39,9 @@ public class MM1Queue {
 
 
         relogioDeSimulacao = 0;
-        events = new LinkedList<Event>();
+        mapServerEvents = new HashMap<>();
+        mapServerEvents.put(1, new LinkedList<>());
+        mapServerEvents.put(2, new LinkedList<>());
         //TEC
         if(tcOption != 0) {
             if (tcOption == 1) {
@@ -62,12 +63,18 @@ public class MM1Queue {
 
 
     public void arrive(double time) {
-        if (events.isEmpty()) {
-            scheduleDeparture(time);
-        }
-        else {
-            events.add(new Event(time,"arrival"));
-        }
+            if(mapServerEvents.get(1).isEmpty()){
+                scheduleDeparture(time);
+                mapServerEvents.get(1).addFirst(new Event(HS, "departure"));
+            }else if(mapServerEvents.get(2).isEmpty()) {
+                scheduleDeparture(time);
+                mapServerEvents.get(2).addFirst(new Event(HS, "departure"));
+            }else if(!mapServerEvents.get(1).isEmpty()){
+                mapServerEvents.get(1).add(new Event(time,"arrival"));
+            }else if(!mapServerEvents.get(2).isEmpty()){
+                mapServerEvents.get(2).add(new Event(time,"arrival"));
+            }
+
         if(tcOption != 0) {
             if (tcOption == 1) {
                 HC += normal();
@@ -82,12 +89,21 @@ public class MM1Queue {
     }
 
 
-    public void departure() {
-        events.remove();
-        if (!events.isEmpty()) {
-            Event next = events.remove();
-            scheduleDeparture(next.getTime());
-        } else{
+    public void departure(int server) {
+
+        if(server == 1) {
+            mapServerEvents.get(1).remove();
+            if(!mapServerEvents.get(1).isEmpty()) {
+                Event next1 = mapServerEvents.get(1).remove();
+                scheduleDeparture(next1.getTime());
+            }
+        }else {
+            mapServerEvents.get(2).remove();
+            if(!mapServerEvents.get(2).isEmpty()) {
+                Event next2 = mapServerEvents.get(2).remove();
+                scheduleDeparture(next2.getTime());
+            }
+        }
             HS = Double.POSITIVE_INFINITY;
             //TEC
             if(tcOption != 0) {
@@ -101,12 +117,12 @@ public class MM1Queue {
             }else{
                 HC += HC;
             }
-        }
+
     }
 
     public void scheduleDeparture(double arrivalTime) {
         HS = relogioDeSimulacao + exponencial(1/ ts);
-        events.addFirst(new Event(HS, "departure"));
+
         served++;
         Wq += (HS - arrivalTime);
         Ws += (HS - relogioDeSimulacao);
@@ -114,7 +130,7 @@ public class MM1Queue {
     }
 
     public void monitor() {
-        int currentQ = events.size();
+        int currentQ = mapServerEvents.get(1).size() +  mapServerEvents.get(2).size();
         TF += currentQ;
         if(imagemDoSistema.size() > 0) {
             imagemDoSistema.remove(0);
@@ -165,7 +181,12 @@ public class MM1Queue {
             else {
                 relogioDeSimulacao = HS;
                 System.out.println("-Evento saida em: " + relogioDeSimulacao);
-                departure();
+                if (!mapServerEvents.get(1).isEmpty() && mapServerEvents.get(1).getFirst().getTime() <= relogioDeSimulacao){
+                    departure(1);
+                }
+                if(!mapServerEvents.get(2).isEmpty() && mapServerEvents.get(2).getFirst().getTime() <= relogioDeSimulacao){
+                    departure(2);
+                }
             }
         }
         System.out.println("-Evento fim da simulacao");
